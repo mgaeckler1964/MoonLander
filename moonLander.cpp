@@ -72,11 +72,18 @@ const double GRAVITATION_CONST = 6.674e-11;
 const double MASS_MOON = 7.342e22;
 const double RADIUS_MOON = 1737400;
 
-const double START_HEIGHT = 1000;	// meter
-const double START_FUEL = 1000;		// liter
+/*
+	mission metrics:
+*/
+const double START_HEIGHT = 1000;		// here we start [meter]
+const double START_FUEL = 1000;			// this is the amount of fuel [liter]
+const double MAX_SPEED = 5;				// max. allowed landing speed [m/s]
+										// Note: This is a more modern version 
+										// of the linar lander,  the original 
+										// eagle allows 1m/s, only
 
-const double BRAKE_FACTOR = 0.3;
-const double CONSUMPTION_FACTOR = 10;
+const double BRAKE_FACTOR = 0.3;		// accelleration for one brake rocket level
+const double CONSUMPTION_FACTOR = 10;	// fuel-consumption per 1 m/s² and 1 s
 
 // --------------------------------------------------------------------- //
 // ----- macros -------------------------------------------------------- //
@@ -102,10 +109,11 @@ class MoonMainWindow : public OverlappedWindow
 	double	m_height,
 			m_speed,
 			m_fuel;
-	gak::StopWatch	m_sw, m_landingTime;
+	gak::StopWatch	m_sw, m_missionTime;
 	Bitmap	m_bg;
 	Icon	m_eagle,
-			m_fire;
+			m_fire,
+			m_crashed;
 
 	int		m_landerX, m_landerY,
 			m_landerHeight, m_fireHeight,
@@ -141,8 +149,18 @@ class MoonMainWindow : public OverlappedWindow
 		m_height = START_HEIGHT;
 		m_speed = 0;
 		m_fuel=START_FUEL;
-		m_landingTime.stop();
-		m_landingTime.start();
+		m_missionTime.start();
+		setTimer(100);
+	}
+	void stopMission()
+	{
+		assert( !m_height );
+		m_missionTime.stop();
+		removeTimer();
+	}
+	bool isMissionActive() const
+	{
+		return m_missionTime.isRunning();
 	}
 
 	public:
@@ -233,8 +251,9 @@ static WindowsApplication	app;
    
 ProcessStatus MoonMainWindow::handleCreate()
 {
-	m_bg = Application::loadBitmap(ID_BMP_MOON_LANDER);
+	m_bg = Application::loadBitmap(IDB_RISING_EARTH);
 	m_eagle = Application::loadIcon(IDI_MOON_LANDER);
+	m_crashed = Application::loadIcon(IDI_CRASHED_LANDER);
 	m_fire = Application::loadIcon(IDI_FIRE);
 
 	resize(m_bg.getWidth(), m_bg.getHeight());
@@ -247,8 +266,6 @@ ProcessStatus MoonMainWindow::handleCreate()
 	iconSize = m_fire.getSize();
 	m_fireX = (m_bg.getWidth() - iconSize.width)/2;
 	m_fireHeight = iconSize.height;
-
-	setTimer(100);
 
 	restart();
 	return psDO_DEFAULT;
@@ -275,7 +292,7 @@ ProcessStatus MoonMainWindow::handleRepaint( Device &hDC )
 	mem.rectangle( size.width - INSTRUMENT_WIDTH, 0, size.width, INSTRUMENT_HEIGHT );
 	gak::StringBuffer<128>	b;
 
-	int x = size.width - INSTRUMENT_WIDTH + PADDING;
+	const int x = size.width - INSTRUMENT_WIDTH + PADDING;
 	int y = PADDING;
 
 	mem.textOut( x, y, 
@@ -308,7 +325,7 @@ ProcessStatus MoonMainWindow::handleRepaint( Device &hDC )
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
 		STRING("Mission Time: ")
-			.add(gak::formatNumber( m_landingTime.get<gak::Seconds<>>().get(), NUMBER_WIDTH, ' ' ))
+			.add(gak::formatNumber( m_missionTime.get<gak::Seconds<>>().get(), NUMBER_WIDTH, ' ' ))
 			.add(" s")
 	);
 
@@ -321,24 +338,26 @@ ProcessStatus MoonMainWindow::handleRepaint( Device &hDC )
 
 	if( m_landerY >= m_bg.getHeight()-m_landerHeight )
 	{
+		bool crashed = m_speed >= MAX_SPEED;
+		m_landerY = m_bg.getHeight()-m_landerHeight;
 		mem.selectFont( Font(this).setVariableFont().setFontSize(20).setBold() );
 		mem.setTextColor( winlib::colors::WHITE );
 		mem.setTextAlignment( Device::haCenter, Device::vaBaseline );
 		mem.setBackgroundColor( winlib::colors::BLACK, TRANSPARENT );
-		mem.textOut(rect.right/2, rect.bottom/2, m_speed < 5 ? "Eagle landed!" : "Eagle Crashed!" );
+		mem.textOut(rect.right/2, rect.bottom/2, crashed ? "Eagle Crashed!" : "Eagle Landed!" );
+		mem.drawIcon( m_landerX, m_landerY, crashed ? m_crashed : m_eagle );
 	}
-
-	if( m_landerX && m_landerY )
+	else 
 	{
+		assert( m_landerX && m_landerY );	// ensure that WM_REDRAW never comes before WM_CREATE
 		mem.drawIcon( m_landerX, m_landerY, m_eagle );
 		if( m_strength )
 		{
-			x = m_fireX;
 			y = m_landerY + m_landerHeight;
 			int count = m_counter%(m_strength+1);
 			for( int i=0; i<count; ++i )
 			{
-				mem.drawIcon( x, y, m_fire );
+				mem.drawIcon( m_fireX, y, m_fire );
 				y += m_fireHeight;
 			}
 		}
@@ -351,10 +370,15 @@ ProcessStatus MoonMainWindow::handleRepaint( Device &hDC )
 
 void MoonMainWindow::handleTimer()
 {
+	if( !isMissionActive() )
+	{
+		assert( !m_height );
+		return;		
+	}
+
 	CurrentState state = getState();
 
 	double ellapsedTime = double(m_sw.getMillis()) / 1000.0;
-	m_sw.stop();
 	m_sw.start();
 	m_height -= (m_speed * ellapsedTime) + (0.5 * state.accell * ellapsedTime * ellapsedTime);
 	m_speed += state.accell * ellapsedTime;
@@ -373,9 +397,10 @@ void MoonMainWindow::handleTimer()
 		if( m_landerY < m_bg.getHeight()-m_landerHeight )
 		{
 			m_landerY += int(m_speed);
-			if( m_landerY > m_bg.getHeight()-m_landerHeight )
+			if( m_landerY >= m_bg.getHeight()-m_landerHeight )
 			{
 				m_landerY = m_bg.getHeight()-m_landerHeight;
+				stopMission();
 			}
 		}
 	}
