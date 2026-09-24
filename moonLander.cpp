@@ -39,7 +39,7 @@
 
 #include <gak/fmtNumber.h>
 #include <gak/stopWatch.h>
-
+#include <gak/physic.h>
 #include <WINLIB/WINAPP.H>
 #include <winlib/POPUP.H>
 #include <WINLIB/DEVICE.H>
@@ -68,10 +68,6 @@ using namespace winlib;
 // ----- constants ----------------------------------------------------- //
 // --------------------------------------------------------------------- //
 
-const double GRAVITATION_CONST = 6.674e-11;
-const double MASS_MOON = 7.342e22;
-const double RADIUS_MOON = 1737400;
-
 /*
 	mission metrics:
 */
@@ -88,13 +84,6 @@ const double CONSUMPTION_FACTOR = 10;	// fuel-consumption per 1 m/s² and 1 s
 // --------------------------------------------------------------------- //
 // ----- macros -------------------------------------------------------- //
 // --------------------------------------------------------------------- //
-
-inline double accelleration( double height )
-{
-	const double dist = RADIUS_MOON + height;
-	double accell = GRAVITATION_CONST * MASS_MOON / (dist*dist);
-	return accell;
-}
 
 // --------------------------------------------------------------------- //
 // ----- type definitions ---------------------------------------------- //
@@ -129,15 +118,15 @@ class MoonMainWindow : public OverlappedWindow
 	struct CurrentState
 	{
 		double brake;
-		double moonAccell;
-		double accell;
+		double moonAccel;
+		double accel;
 	};
 	CurrentState getState() const
 	{
 		CurrentState	state;
 		state.brake = m_strength * BRAKE_FACTOR;
-		state.moonAccell = accelleration(m_height);
-		state.accell = m_height > 0 ? state.moonAccell - state.brake : 0;
+		state.moonAccel = gak::physic::moonAcceleration(m_height);
+		state.accel = m_height > 0 ? state.moonAccel - state.brake : 0;
 
 		return state;
 	}
@@ -311,15 +300,15 @@ ProcessStatus MoonMainWindow::handleRepaint( Device &hDC )
 
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
-		STRING("Moon Accell:  ")
-			.add(gak::formatFloat( state.moonAccell, NUMBER_WIDTH, NUMBER_PREC ))
+		STRING("Moon Accel:   ")
+			.add(gak::formatFloat( state.moonAccel, NUMBER_WIDTH, NUMBER_PREC ))
 			.add(" m/s²")
 	);
 
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
-		STRING("Cur Accell:   ")
-			.add(gak::formatFloat( state.accell, NUMBER_WIDTH, NUMBER_PREC ))
+		STRING("Cur Accel:    ")
+			.add(gak::formatFloat( state.accel, NUMBER_WIDTH, NUMBER_PREC ))
 			.add(" m/s²") 
 	);
 
@@ -377,14 +366,14 @@ void MoonMainWindow::handleTimer()
 		return;		
 	}
 
-	CurrentState state = getState();
+	const CurrentState state = getState();
 
-	double ellapsedTime = double(m_sw.getMillis()) / 1000.0;
+	const double elapsedTime = double(m_sw.getMillis()) / 1000.0;
 	m_sw.start();
-	m_height -= (m_speed * ellapsedTime) + (0.5 * state.accell * ellapsedTime * ellapsedTime);
-	m_speed += state.accell * ellapsedTime;
+	m_height -= gak::physic::distance( m_speed, state.accel, elapsedTime );
+	m_speed = gak::physic::speed( m_speed, state.accel, elapsedTime );
 
-	double consumption = state.brake * ellapsedTime * CONSUMPTION_FACTOR;
+	const double consumption = state.brake * elapsedTime * CONSUMPTION_FACTOR;
 	m_fuel -= consumption;
 	if( m_fuel <= 0 )
 	{
