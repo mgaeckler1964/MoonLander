@@ -282,7 +282,6 @@ ProcessStatus MoonMainWindow::handleRepaint( Device &hDC )
 
 	CurrentState	state = getState();
 	Size			size = getClientSize();
-	RectBorder		rect = getClientRectangle();
 	MemoryDevice	mem( hDC, size );
 
 	mem.drawBitmap( 0, 0, m_bg );
@@ -344,7 +343,7 @@ ProcessStatus MoonMainWindow::handleRepaint( Device &hDC )
 		mem.setTextColor( winlib::colors::WHITE );
 		mem.setTextAlignment( Device::haCenter, Device::vaBaseline );
 		mem.setBackgroundColor( winlib::colors::BLACK, TRANSPARENT );
-		mem.textOut(rect.right/2, rect.bottom/2, crashed ? "Eagle Crashed!" : "Eagle Landed!" );
+		mem.textOut(size.width/2, size.height/2, crashed ? "Eagle Crashed!" : "Eagle Landed!" );
 		mem.drawIcon( m_landerX, m_landerY, crashed ? m_crashed : m_eagle );
 	}
 	else 
