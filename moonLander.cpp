@@ -150,12 +150,14 @@ class MoonMainWindow : public OverlappedWindow
 		m_speed = 0;
 		m_fuel=START_FUEL;
 		m_missionTime.start();
+		m_sw.start();
 		setTimer(100);
 	}
 	void stopMission()
 	{
 		assert( !m_height );
 		m_missionTime.stop();
+		m_sw.stop();
 		removeTimer();
 	}
 	bool isMissionActive() const
@@ -165,7 +167,7 @@ class MoonMainWindow : public OverlappedWindow
 
 	public:
 	MoonMainWindow() : OverlappedWindow( nullptr ), 
-		m_landerX(0), m_landerY(0), m_fireX(0), m_strength(0), m_counter(0), m_sw(true)
+		m_landerX(0), m_landerY(0), m_fireX(0), m_strength(0), m_counter(0)
 	{
 		removeStyle(WS_THICKFRAME|WS_MAXIMIZEBOX);
 		setText("Moon Lander");
