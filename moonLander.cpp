@@ -118,7 +118,6 @@ class MoonMainWindow : public OverlappedWindow
 	ProcessStatus handleRepaint( Device &hDC ) override;
 	ProcessStatus handleCharacterInput( int c ) override;
 	void handleTimer() override;
-
 	struct CurrentState
 	{
 		double brake;
@@ -150,7 +149,7 @@ class MoonMainWindow : public OverlappedWindow
 	MoonMainWindow() : OverlappedWindow( nullptr ), 
 		m_landerX(0), m_landerY(0), m_fireX(0), m_strength(0), m_counter(0), m_sw(true)
 	{
-		removeStyle(WS_THICKFRAME);
+		removeStyle(WS_THICKFRAME|WS_MAXIMIZEBOX);
 		setText("Moon Lander");
 		restart();
 	}
