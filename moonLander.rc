@@ -2,6 +2,7 @@
 
 #include "moonLander_rc.h"
 
+IDI_MOON_APP		ICON	"moonLanderApp.ico"
 IDI_MOON_LANDER		ICON	"moonLander.ico"
 IDI_CRASHED_LANDER	ICON	"crashedLander.ico"
 IDI_FIRE			ICON	"fire.ico"
