@@ -265,7 +265,7 @@ ProcessStatus MoonMainWindow::handleCreate()
 ProcessStatus MoonMainWindow::handleRepaint( Device &hDC )
 {
 	const int INSTRUMENT_WIDTH = 215;
-	const int INSTRUMENT_HEIGHT = 108;
+	const int INSTRUMENT_HEIGHT = 138;
 	const int NUMBER_WIDTH = 6;
 	const int NUMBER_PREC = 2;
 	const int LINE_HEIGHT = 15;
@@ -324,6 +324,22 @@ ProcessStatus MoonMainWindow::handleRepaint( Device &hDC )
 		STRING("Fuel:         ")
 			.add(gak::formatFloat( m_fuel, NUMBER_WIDTH, NUMBER_PREC ))
 			.add(" l")
+	);
+
+	y += LINE_HEIGHT;
+	double landingTime = gak::physic::acceleratedTime(m_speed,state.accel,m_height);
+	mem.textOut( x, y, 
+		STRING("Est. Time:    ")
+		.add(gak::formatFloat( landingTime, NUMBER_WIDTH, NUMBER_PREC ))
+			.add(" s")
+	);
+
+	y += LINE_HEIGHT;
+	double landingSpeed = gak::physic::speed(m_speed, state.accel, landingTime );
+	mem.textOut( x, y, 
+		STRING("Est. Speed:   ")
+		.add(gak::formatFloat( landingSpeed, NUMBER_WIDTH, NUMBER_PREC ))
+			.add(" m/s")
 	);
 
 	if( m_landerY >= m_bg.getHeight()-m_landerHeight )
