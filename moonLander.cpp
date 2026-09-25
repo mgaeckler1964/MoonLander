@@ -279,10 +279,10 @@ ProcessStatus MoonMainWindow::handleRepaint( Device &hDC )
 
 	mem.setMonospacedFont();
 	mem.getBrush().create( colors::WHITE );
-	mem.rectangle( size.width - INSTRUMENT_WIDTH, 0, size.width, INSTRUMENT_HEIGHT );
+	mem.rectangle( 0, 0, INSTRUMENT_WIDTH, INSTRUMENT_HEIGHT );
 	gak::StringBuffer<128>	b;
 
-	const int x = size.width - INSTRUMENT_WIDTH + PADDING;
+	const int x = PADDING;
 	int y = PADDING;
 
 	mem.textOut( x, y, 
@@ -300,14 +300,14 @@ ProcessStatus MoonMainWindow::handleRepaint( Device &hDC )
 
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
-		STRING("Moon Accel:   ")
+		STRING("Moon Accel.:  ")
 			.add(gak::formatFloat( state.moonAccel, NUMBER_WIDTH, NUMBER_PREC ))
 			.add(" m/s²")
 	);
 
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
-		STRING("Cur Accel:    ")
+		STRING("Cur. Accel.:  ")
 			.add(gak::formatFloat( state.accel, NUMBER_WIDTH, NUMBER_PREC ))
 			.add(" m/s²") 
 	);
@@ -328,19 +328,33 @@ ProcessStatus MoonMainWindow::handleRepaint( Device &hDC )
 
 	y += LINE_HEIGHT;
 	double landingTime = gak::physic::acceleratedTime(m_speed,state.accel,m_height);
-	mem.textOut( x, y, 
-		STRING("Est. Time:    ")
-		.add(gak::formatFloat( landingTime, NUMBER_WIDTH, NUMBER_PREC ))
-			.add(" s")
-	);
+	if( landingTime>= 0 )
+	{
+		mem.textOut( x, y, 
+			STRING("Est. Time:    ")
+			.add(gak::formatFloat( landingTime, NUMBER_WIDTH, NUMBER_PREC ))
+				.add(" s")
+		);
+	}
+	else
+	{
+		mem.textOut( x, y, STRING("Est. Time:    ------") );
+	}
 
 	y += LINE_HEIGHT;
-	double landingSpeed = gak::physic::speed(m_speed, state.accel, landingTime );
-	mem.textOut( x, y, 
-		STRING("Est. Speed:   ")
-		.add(gak::formatFloat( landingSpeed, NUMBER_WIDTH, NUMBER_PREC ))
-			.add(" m/s")
-	);
+	if( landingTime>= 0 )
+	{
+		double landingSpeed = gak::physic::speed(m_speed, state.accel, landingTime );
+		mem.textOut( x, y, 
+			STRING("Est. Speed:   ")
+			.add(gak::formatFloat( landingSpeed, NUMBER_WIDTH, NUMBER_PREC ))
+				.add(" m/s")
+		);
+	}
+	else
+	{
+		mem.textOut( x, y, STRING("Est. Speed:   ------") );
+	}
 
 	if( m_landerY >= m_bg.getHeight()-m_landerHeight )
 	{
