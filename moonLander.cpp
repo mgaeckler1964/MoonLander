@@ -111,6 +111,8 @@ class MoonMainWindow : public OverlappedWindow
 	int		m_strength,
 			m_counter;
 
+	bool	m_showEstimations;
+
 	ProcessStatus handleCreate() override;
 	ProcessStatus handleRepaint( Device &hDC ) override;
 	ProcessStatus handleCharacterInput( int c ) override;
@@ -156,7 +158,7 @@ class MoonMainWindow : public OverlappedWindow
 
 	public:
 	MoonMainWindow() : OverlappedWindow( nullptr ), 
-		m_landerX(0), m_landerY(0), m_fireX(0), m_strength(0), m_counter(0)
+		m_landerX(0), m_landerY(0), m_fireX(0), m_strength(0), m_counter(0), m_showEstimations(false)
 	{
 		removeStyle(WS_THICKFRAME|WS_MAXIMIZEBOX);
 		setText("Moon Lander");
@@ -264,12 +266,12 @@ ProcessStatus MoonMainWindow::handleCreate()
 
 ProcessStatus MoonMainWindow::handleRepaint( Device &hDC )
 {
-	const int INSTRUMENT_WIDTH = 215;
-	const int INSTRUMENT_HEIGHT = 138;
+	const int PADDING = 8;
 	const int NUMBER_WIDTH = 6;
 	const int NUMBER_PREC = 2;
 	const int LINE_HEIGHT = 15;
-	const int PADDING = 8;
+	const int INSTRUMENT_WIDTH = 215;
+	const int INSTRUMENT_HEIGHT = 2*PADDING+8*LINE_HEIGHT;
 
 	CurrentState	state = getState();
 	Size			size = getClientSize();
@@ -279,7 +281,7 @@ ProcessStatus MoonMainWindow::handleRepaint( Device &hDC )
 
 	mem.setMonospacedFont();
 	mem.getBrush().create( colors::WHITE );
-	mem.rectangle( 0, 0, INSTRUMENT_WIDTH, INSTRUMENT_HEIGHT );
+	mem.rectangle( 0, 0, INSTRUMENT_WIDTH, m_showEstimations ? INSTRUMENT_HEIGHT : (INSTRUMENT_HEIGHT-2*LINE_HEIGHT) );
 	gak::StringBuffer<128>	b;
 
 	const int x = PADDING;
@@ -326,34 +328,37 @@ ProcessStatus MoonMainWindow::handleRepaint( Device &hDC )
 			.add(" l")
 	);
 
-	y += LINE_HEIGHT;
-	double landingTime = gak::physic::acceleratedTime(m_speed,state.accel,m_height);
-	if( landingTime>= 0 )
+	if( m_showEstimations )
 	{
-		mem.textOut( x, y, 
-			STRING("Est. Time:    ")
-			.add(gak::formatFloat( landingTime, NUMBER_WIDTH, NUMBER_PREC ))
-				.add(" s")
-		);
-	}
-	else
-	{
-		mem.textOut( x, y, STRING("Est. Time:    ------") );
-	}
+		y += LINE_HEIGHT;
+		double landingTime = gak::physic::acceleratedTime(m_speed,state.accel,m_height);
+		if( landingTime>= 0 )
+		{
+			mem.textOut( x, y, 
+				STRING("Est. Time:    ")
+				.add(gak::formatFloat( landingTime, NUMBER_WIDTH, NUMBER_PREC ))
+					.add(" s")
+			);
+		}
+		else
+		{
+			mem.textOut( x, y, STRING("Est. Time:    ------") );
+		}
 
-	y += LINE_HEIGHT;
-	if( landingTime>= 0 )
-	{
-		double landingSpeed = gak::physic::speed(m_speed, state.accel, landingTime );
-		mem.textOut( x, y, 
-			STRING("Est. Speed:   ")
-			.add(gak::formatFloat( landingSpeed, NUMBER_WIDTH, NUMBER_PREC ))
-				.add(" m/s")
-		);
-	}
-	else
-	{
-		mem.textOut( x, y, STRING("Est. Speed:   ------") );
+		y += LINE_HEIGHT;
+		if( landingTime>= 0 )
+		{
+			double landingSpeed = gak::physic::speed(m_speed, state.accel, landingTime );
+			mem.textOut( x, y, 
+				STRING("Est. Speed:   ")
+				.add(gak::formatFloat( landingSpeed, NUMBER_WIDTH, NUMBER_PREC ))
+					.add(" m/s")
+			);
+		}
+		else
+		{
+			mem.textOut( x, y, STRING("Est. Speed:   ------") );
+		}
 	}
 
 	if( m_landerY >= m_bg.getHeight()-m_landerHeight )
@@ -435,6 +440,11 @@ ProcessStatus MoonMainWindow::handleCharacterInput( int c )
 		m_strength = c - '0';
 	else if( c == 'r'  )
 		restart();
+	else if( c == 'e'  )
+		m_showEstimations = !m_showEstimations;
+	else if( c == 'q'  )
+		close();
+;
 	return psPROCESSED;
 }
 
