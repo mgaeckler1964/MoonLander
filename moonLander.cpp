@@ -397,9 +397,9 @@ void MoonMainWindow::paintGraph( MemoryDevice &mem, const gak::PODarray<double> 
 		int screenX = i;
 		if( int(data.size()) > size.width )
 		{
-			screenX = gak::math::float2Int<int>(gak::math::project<double>( screenXIn, screenX, screenXOut ));
+			screenX = gak::math::round<int>(gak::math::project<double>( screenXIn, screenX, screenXOut ));
 		}
-		int screenY = gak::math::float2Int<int>(gak::math::project<double>( range, data[i], screenYrange ));
+		int screenY = gak::math::round<int>(gak::math::project<double>( range, data[i], screenYrange ));
 		if( first )
 		{
 			mem.moveTo( screenX, screenY );
@@ -518,7 +518,7 @@ void MoonMainWindow::handleTimer()
 		m_strength = 0;
 		if( m_landerY < m_bg.getHeight()-m_landerHeight )
 		{
-			m_landerY += gak::math::max(gak::math::float2Int<int>(m_speed),1);
+			m_landerY += gak::math::max(gak::math::round<int>(m_speed),1);
 			if( m_landerY >= m_bg.getHeight()-m_landerHeight )
 			{
 				m_landerY = m_bg.getHeight()-m_landerHeight;
