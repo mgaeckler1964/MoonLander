@@ -40,6 +40,8 @@
 #include <gak/fmtNumber.h>
 #include <gak/stopWatch.h>
 #include <gak/physic.h>
+#include <gak/optional.h>
+
 #include <WINLIB/WINAPP.H>
 #include <winlib/POPUP.H>
 #include <WINLIB/DEVICE.H>
@@ -388,25 +390,26 @@ void MoonMainWindow::paintGraph( MemoryDevice &mem, const gak::PODarray<double> 
 	const Size &size = mem.getSize();
 
 	gak::Duo<double, double>	screenYrange(size.height, 0),
-								screenXIn,
-								screenXOut;
+								screenXIn(0,double(data.size()-1)),
+								screenXOut(0,size.width);
+	gak::Optional<gak::math::Scale<double>>	xScale;
+	
+	gak::math::Scale<double>	yScale( range, screenYrange );
 
-	bool first = true;
 	if( int(data.size()) > size.width )
 	{
-		screenXIn.val1 = 0;
-		screenXIn.val2 = double(data.size()-1);
-		screenXOut.val1 = 0;
-		screenXOut.val2 = size.width;
+		xScale = gak::math::Scale<double>( screenXIn, screenXOut );
 	}
+
+	bool first = true;
 	for( int i=0; i<int(data.size()); ++i )
 	{
 		int screenX = i;
 		if( int(data.size()) > size.width )
 		{
-			screenX = gak::math::round<int>(gak::math::scale( screenXIn, double(screenX), screenXOut ));
+			screenX = gak::math::round<int>(xScale.get()( double(screenX)));
 		}
-		int screenY = gak::math::round<int>(gak::math::scale( range, data[i], screenYrange ));
+		int screenY = gak::math::round<int>(yScale( data[i] ));
 		if( first )
 		{
 			mem.moveTo( screenX, screenY );
