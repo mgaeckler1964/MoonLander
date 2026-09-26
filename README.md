@@ -26,6 +26,7 @@ werden:
 'E':     Zeigt zusätzliche Metriken:
          Zeit bis zur Landung
          Geschwindigkeit bei der Landung
+Leer:    Schaltet zwischen Profil- und Landeransicht um.
 'Q':     Beendet das Programm.
 
 <img width="642" height="511" alt="screen" src="https://github.com/user-attachments/assets/d91cdcc1-159a-4b14-9ab5-d6c4e2bb1796" />

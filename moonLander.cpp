@@ -95,6 +95,9 @@ const double CONSUMPTION_FACTOR = 10;	// fuel-consumption per 1 m/s² and 1 s
 
 class MoonMainWindow : public OverlappedWindow
 {
+	gak::PODarray<double>		m_heights, m_speeds;
+	gak::math::MinMax<double>	m_heightRange, m_speedRange;
+
 	double	m_height,
 			m_speed,
 			m_fuel;
@@ -102,16 +105,22 @@ class MoonMainWindow : public OverlappedWindow
 	Bitmap	m_bg;
 	Icon	m_eagle,
 			m_fire,
-			m_crashed;
+			m_crashed,
+			m_austria,
+			m_eu;
 
 	int		m_landerX, m_landerY,
-			m_landerHeight, m_fireHeight,
+			m_landerHeight, m_fireHeight, m_austriaHeight, m_euHeight,
 			m_fireX;
 
 	int		m_strength,
 			m_counter;
 
-	bool	m_showEstimations;
+	bool	m_showEstimations, m_showGraph;
+
+	void paintMoon( MemoryDevice &hDC );
+	void paintGraph( MemoryDevice &hDC );
+	static void paintGraph( MemoryDevice &hDC, const gak::PODarray<double> &data, const gak::Duo<double,double> &range);
 
 	ProcessStatus handleCreate() override;
 	ProcessStatus handleRepaint( Device &hDC ) override;
@@ -140,6 +149,10 @@ class MoonMainWindow : public OverlappedWindow
 		m_height = START_HEIGHT;
 		m_speed = 0;
 		m_fuel=START_FUEL;
+		m_heights.empty();
+		m_speeds.empty();
+		m_heightRange.reset();
+		m_speedRange.reset();
 		m_missionTime.start();
 		m_sw.start();
 		setTimer(100);
@@ -158,10 +171,12 @@ class MoonMainWindow : public OverlappedWindow
 
 	public:
 	MoonMainWindow() : OverlappedWindow( nullptr ), 
-		m_landerX(0), m_landerY(0), m_fireX(0), m_strength(0), m_counter(0), m_showEstimations(false)
+		m_landerX(0), m_landerY(0), m_fireX(0), m_strength(0), m_counter(0), m_showEstimations(false), m_showGraph(false)
 	{
 		removeStyle(WS_THICKFRAME|WS_MAXIMIZEBOX);
 		setText("Moon Lander");
+		m_heights.setCapacity(1024, false);
+		m_speeds.setCapacity(1024, false);
 		restart();
 	}
 };
@@ -234,37 +249,7 @@ static WindowsApplication	app;
 // ----- class privates ------------------------------------------------ //
 // --------------------------------------------------------------------- //
 
-// --------------------------------------------------------------------- //
-// ----- class protected ----------------------------------------------- //
-// --------------------------------------------------------------------- //
-
-// --------------------------------------------------------------------- //
-// ----- class virtuals ------------------------------------------------ //
-// --------------------------------------------------------------------- //
-   
-ProcessStatus MoonMainWindow::handleCreate()
-{
-	m_bg = Application::loadBitmap(IDB_RISING_EARTH);
-	m_eagle = Application::loadIcon(IDI_MOON_LANDER);
-	m_crashed = Application::loadIcon(IDI_CRASHED_LANDER);
-	m_fire = Application::loadIcon(IDI_FIRE);
-
-	resize(m_bg.getWidth(), m_bg.getHeight());
-	adjustWindoRect();
-
-	Size iconSize = m_eagle.getSize();
-	m_landerX = (m_bg.getWidth() - iconSize.width)/2;
-	m_landerHeight = iconSize.height;
-
-	iconSize = m_fire.getSize();
-	m_fireX = (m_bg.getWidth() - iconSize.width)/2;
-	m_fireHeight = iconSize.height;
-
-	restart();
-	return psDO_DEFAULT;
-}
-
-ProcessStatus MoonMainWindow::handleRepaint( Device &hDC )
+void MoonMainWindow::paintMoon( MemoryDevice &mem )
 {
 	const int PADDING = 8;
 	const int NUMBER_WIDTH = 6;
@@ -274,8 +259,6 @@ ProcessStatus MoonMainWindow::handleRepaint( Device &hDC )
 	const int INSTRUMENT_HEIGHT = 2*PADDING+8*LINE_HEIGHT;
 
 	CurrentState	state = getState();
-	Size			size = getClientSize();
-	MemoryDevice	mem( hDC, size );
 
 	mem.drawBitmap( 0, 0, m_bg );
 
@@ -369,8 +352,19 @@ ProcessStatus MoonMainWindow::handleRepaint( Device &hDC )
 		mem.setTextColor( winlib::colors::WHITE );
 		mem.setTextAlignment( Device::haCenter, Device::vaBaseline );
 		mem.setBackgroundColor( winlib::colors::BLACK, TRANSPARENT );
+		const Size &size = mem.getSize();
 		mem.textOut(size.width/2, size.height/2, crashed ? "Eagle Crashed!" : "Eagle Landed!" );
 		mem.drawIcon( m_landerX, m_landerY, crashed ? m_crashed : m_eagle );
+		if( !crashed )
+		{
+			int x = m_landerX + 128;
+			int y = m_bg.getHeight()-m_austriaHeight;
+			mem.drawIcon( x, y, m_austria );
+
+			x = m_landerX - 128;
+			y = m_bg.getHeight()-m_euHeight;
+			mem.drawIcon( x, y, m_eu );
+		}
 	}
 	else 
 	{
@@ -387,6 +381,96 @@ ProcessStatus MoonMainWindow::handleRepaint( Device &hDC )
 			}
 		}
 	}
+}
+
+void MoonMainWindow::paintGraph( MemoryDevice &mem, const gak::PODarray<double> &data, const gak::Duo<double,double> &range)
+{
+	const Size &size = mem.getSize();
+
+	gak::Duo<double, double>	screenYrange(size.height, 0);
+	gak::Duo<double, double>	screenXIn(0, double(data.size()));
+	gak::Duo<double, double>	screenXOut(0, size.width);
+
+	bool first = true;
+	for( int i=0; i<int(data.size()); ++i )
+	{
+		int screenX = i;
+		if( int(data.size()) > size.width )
+		{
+			screenX = gak::math::float2Int<int>(gak::math::project<double>( screenXIn, screenX, screenXOut ));
+		}
+		int screenY = gak::math::float2Int<int>(gak::math::project<double>( range, data[i], screenYrange ));
+		if( first )
+		{
+			mem.moveTo( screenX, screenY );
+			first = false;
+		}
+		else
+		{
+			mem.lineTo( screenX, screenY );
+		}
+	}
+}
+
+void MoonMainWindow::paintGraph( MemoryDevice &mem )
+{
+	const Size &size = mem.getSize();
+
+	mem.getBrush().create( colors::WHITE );
+	mem.rectangle( 0, 0, size.width, size.height );
+
+	mem.getPen().setColor( colors::BLUE );
+	paintGraph( mem, m_heights, m_heightRange.getDuo() );
+	mem.getPen().setColor( colors::RED );
+	paintGraph( mem, m_speeds, m_speedRange.getDuo() );
+}
+
+// --------------------------------------------------------------------- //
+// ----- class protected ----------------------------------------------- //
+// --------------------------------------------------------------------- //
+
+// --------------------------------------------------------------------- //
+// ----- class virtuals ------------------------------------------------ //
+// --------------------------------------------------------------------- //
+   
+ProcessStatus MoonMainWindow::handleCreate()
+{
+	m_bg = Application::loadBitmap(IDB_RISING_EARTH);
+	m_eagle = Application::loadIcon(IDI_MOON_LANDER);
+	m_crashed = Application::loadIcon(IDI_CRASHED_LANDER);
+	m_fire = Application::loadIcon(IDI_FIRE);
+	m_austria = Application::loadIcon(IDI_AUSTRIA);
+	m_eu = Application::loadIcon(IDI_EU);
+
+	resize(m_bg.getWidth(), m_bg.getHeight());
+	adjustWindoRect();
+
+	Size iconSize = m_eagle.getSize();
+	m_landerX = (m_bg.getWidth() - iconSize.width)/2;
+	m_landerHeight = iconSize.height;
+
+	iconSize = m_fire.getSize();
+	m_fireX = (m_bg.getWidth() - iconSize.width)/2;
+	m_fireHeight = iconSize.height;
+
+	iconSize = m_austria.getSize();
+	m_austriaHeight = iconSize.height;
+
+	iconSize = m_eu.getSize();
+	m_euHeight = iconSize.height;
+
+	restart();
+	return psDO_DEFAULT;
+}
+
+ProcessStatus MoonMainWindow::handleRepaint( Device &hDC )
+{
+	Size			size = getClientSize();
+	MemoryDevice	mem( hDC, size );
+	if( m_showGraph )
+		paintGraph(mem);
+	else
+		paintMoon(mem);
 
 	mem.drawToWindow();
 
@@ -401,27 +485,40 @@ void MoonMainWindow::handleTimer()
 		return;		
 	}
 
-	const CurrentState state = getState();
-
-	const double elapsedTime = double(m_sw.getMillis()) / 1000.0;
-	m_sw.start();
-	m_height -= gak::physic::distance( m_speed, state.accel, elapsedTime );
-	m_speed = gak::physic::speed( m_speed, state.accel, elapsedTime );
-
-	const double consumption = state.brake * elapsedTime * CONSUMPTION_FACTOR;
-	m_fuel -= consumption;
-	if( m_fuel <= 0 )
+	if( m_height > 0 )
 	{
-		m_fuel = 0;
-		m_strength = 0;
+		const CurrentState state = getState();
+
+		const double elapsedTime = double(m_sw.getMillis()) / 1000.0;
+		m_sw.start();
+		m_height -= gak::physic::distance( m_speed, state.accel, elapsedTime );
+		m_speed = gak::physic::speed( m_speed, state.accel, elapsedTime );
+		if( m_height <= 0 )
+		{
+			m_height = 0;
+			m_strength = 0;
+		}
+		m_heights.addElement( m_height );
+		m_heightRange.test( m_height );
+		m_speeds.addElement( m_speed );
+		m_speedRange.test( m_speed );
+
+		const double consumption = state.brake * elapsedTime * CONSUMPTION_FACTOR;
+		m_fuel -= consumption;
+		if( m_fuel <= 0 )
+		{
+			m_fuel = 0;
+			m_strength = 0;
+		}
 	}
+
 	if( m_height <= 0 )
 	{
 		m_height = 0;
 		m_strength = 0;
 		if( m_landerY < m_bg.getHeight()-m_landerHeight )
 		{
-			m_landerY += int(m_speed);
+			m_landerY += gak::math::max(gak::math::float2Int<int>(m_speed),1);
 			if( m_landerY >= m_bg.getHeight()-m_landerHeight )
 			{
 				m_landerY = m_bg.getHeight()-m_landerHeight;
@@ -442,6 +539,11 @@ ProcessStatus MoonMainWindow::handleCharacterInput( int c )
 		restart();
 	else if( c == 'e'  )
 		m_showEstimations = !m_showEstimations;
+	else if( c == ' '  )
+	{
+		m_showGraph = !m_showGraph;
+		invalidateWindow();
+	}
 	else if( c == 'q'  )
 		close();
 ;

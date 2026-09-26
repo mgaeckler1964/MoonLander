@@ -7,6 +7,9 @@ IDI_MOON_LANDER		ICON	"moonLander.ico"
 IDI_CRASHED_LANDER	ICON	"crashedLander.ico"
 IDI_FIRE			ICON	"fire.ico"
 
+IDI_AUSTRIA			ICON	"austria.ico"
+IDI_EU				ICON	"eu.ico"
+
 IDB_RISING_EARTH	BITMAP	"moon.bmp"
 
 1 VERSIONINFO 
