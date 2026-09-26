@@ -387,19 +387,26 @@ void MoonMainWindow::paintGraph( MemoryDevice &mem, const gak::PODarray<double> 
 {
 	const Size &size = mem.getSize();
 
-	gak::Duo<double, double>	screenYrange(size.height, 0);
-	gak::Duo<double, double>	screenXIn(0, double(data.size()));
-	gak::Duo<double, double>	screenXOut(0, size.width);
+	gak::Duo<double, double>	screenYrange(size.height, 0),
+								screenXIn,
+								screenXOut;
 
 	bool first = true;
+	if( int(data.size()) > size.width )
+	{
+		screenXIn.val1 = 0;
+		screenXIn.val2 = double(data.size()-1);
+		screenXOut.val1 = 0;
+		screenXOut.val2 = size.width;
+	}
 	for( int i=0; i<int(data.size()); ++i )
 	{
 		int screenX = i;
 		if( int(data.size()) > size.width )
 		{
-			screenX = gak::math::round<int>(gak::math::project<double>( screenXIn, screenX, screenXOut ));
+			screenX = gak::math::round<int>(gak::math::scale( screenXIn, double(screenX), screenXOut ));
 		}
-		int screenY = gak::math::round<int>(gak::math::project<double>( range, data[i], screenYrange ));
+		int screenY = gak::math::round<int>(gak::math::scale( range, data[i], screenYrange ));
 		if( first )
 		{
 			mem.moveTo( screenX, screenY );
