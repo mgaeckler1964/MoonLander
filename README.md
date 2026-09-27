@@ -21,6 +21,7 @@ willkürlich festgelegt. Der Spielspaß liegt natürlich im Vordergrund.
 Die Benutzung ist sehr einfach. Das Programm  kann mit ein paar Tasten gesteuert
 werden:
 
+<pre>
 '0'-'9': Steuerung der Bremsraketen.
 'R':     Neustart der Mission
 'E':     Zeigt zusätzliche Metriken:
@@ -28,5 +29,6 @@ werden:
          Geschwindigkeit bei der Landung
 Leer:    Schaltet zwischen Profil- und Landeransicht um.
 'Q':     Beendet das Programm.
+</pre>
 
 <img width="642" height="511" alt="screen" src="https://github.com/user-attachments/assets/d91cdcc1-159a-4b14-9ab5-d6c4e2bb1796" />
