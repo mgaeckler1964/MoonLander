@@ -122,7 +122,7 @@ class MoonMainWindow : public OverlappedWindow
 
 	void paintMoon( MemoryDevice &hDC );
 	void paintGraph( MemoryDevice &hDC );
-	static void paintLineGraph( MemoryDevice &hDC, const gak::PODarray<double> &data, const gak::math::MinMax<double> &range );
+	void paintLineGraph( MemoryDevice &hDC, const gak::PODarray<double> &data, const gak::math::MinMax<double> &range, bool speed );
 
 	ProcessStatus handleCreate() override;
 	ProcessStatus handleRepaint( Device &hDC ) override;
@@ -385,7 +385,7 @@ void MoonMainWindow::paintMoon( MemoryDevice &mem )
 	}
 }
 
-void MoonMainWindow::paintLineGraph( MemoryDevice &mem, const gak::PODarray<double> &data, const gak::math::MinMax<double> &range )
+void MoonMainWindow::paintLineGraph( MemoryDevice &mem, const gak::PODarray<double> &data, const gak::math::MinMax<double> &range, bool speed )
 {
 	const Size &size = mem.getSize();
 
@@ -396,22 +396,30 @@ void MoonMainWindow::paintLineGraph( MemoryDevice &mem, const gak::PODarray<doub
 	
 	gak::math::Scale<double>	yScale( range.getDuo(), screenYrange );
 
-	if( int(data.size()) > size.width )
+	if( int(data.size()) > size.width || !isMissionActive() )
 	{
 		xScale.create( screenXIn, screenXOut );
 	}
-
-	if( range.getMin() < 0 )
+	if( speed )
 	{
-		int y = gak::math::round<int>(yScale( 0 ));
-		mem.moveTo( 0, y );
-		mem.lineTo( size.width, y );
+		if( range.getMin() < 0 )
+		{
+			int y = gak::math::round<int>(yScale( 0 ));
+			mem.moveTo( 0, y );
+			mem.lineTo( size.width, y );
+		}
+		if( range.getMax() > MAX_SPEED )
+		{
+			int y = gak::math::round<int>(yScale( MAX_SPEED ));
+			mem.moveTo( 0, y );
+			mem.lineTo( size.width, y );
+		}
 	}
 	bool first = true;
 	for( int i=0; i<int(data.size()); ++i )
 	{
 		int screenX = i;
-		if( int(data.size()) > size.width )
+		if( xScale.isPresent() )
 		{
 			screenX = gak::math::round<int>(xScale.get()( double(screenX)));
 		}
@@ -436,9 +444,9 @@ void MoonMainWindow::paintGraph( MemoryDevice &mem )
 	mem.rectangle( 0, 0, size.width, size.height );
 
 	mem.getPen().setColor( colors::BLUE );
-	paintLineGraph( mem, m_heights, m_heightRange );
+	paintLineGraph( mem, m_heights, m_heightRange, false );
 	mem.getPen().setColor( colors::RED );
-	paintLineGraph( mem, m_speeds, m_speedRange );
+	paintLineGraph( mem, m_speeds, m_speedRange, true );
 }
 
 // --------------------------------------------------------------------- //
