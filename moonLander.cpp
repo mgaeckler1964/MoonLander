@@ -122,7 +122,7 @@ class MoonMainWindow : public OverlappedWindow
 
 	void paintMoon( MemoryDevice &hDC );
 	void paintGraph( MemoryDevice &hDC );
-	static void paintGraph( MemoryDevice &hDC, const gak::PODarray<double> &data, const gak::Duo<double,double> &range);
+	static void paintLineGraph( MemoryDevice &hDC, const gak::PODarray<double> &data, const gak::math::MinMax<double> &range );
 
 	ProcessStatus handleCreate() override;
 	ProcessStatus handleRepaint( Device &hDC ) override;
@@ -385,7 +385,7 @@ void MoonMainWindow::paintMoon( MemoryDevice &mem )
 	}
 }
 
-void MoonMainWindow::paintGraph( MemoryDevice &mem, const gak::PODarray<double> &data, const gak::Duo<double,double> &range)
+void MoonMainWindow::paintLineGraph( MemoryDevice &mem, const gak::PODarray<double> &data, const gak::math::MinMax<double> &range )
 {
 	const Size &size = mem.getSize();
 
@@ -394,13 +394,19 @@ void MoonMainWindow::paintGraph( MemoryDevice &mem, const gak::PODarray<double> 
 								screenXOut(0,size.width);
 	gak::Optional<gak::math::Scale<double>>	xScale;
 	
-	gak::math::Scale<double>	yScale( range, screenYrange );
+	gak::math::Scale<double>	yScale( range.getDuo(), screenYrange );
 
 	if( int(data.size()) > size.width )
 	{
-		xScale = gak::math::Scale<double>( screenXIn, screenXOut );
+		xScale.create( screenXIn, screenXOut );
 	}
 
+	if( range.getMin() < 0 )
+	{
+		int y = gak::math::round<int>(yScale( 0 ));
+		mem.moveTo( 0, y );
+		mem.lineTo( size.width, y );
+	}
 	bool first = true;
 	for( int i=0; i<int(data.size()); ++i )
 	{
@@ -430,9 +436,9 @@ void MoonMainWindow::paintGraph( MemoryDevice &mem )
 	mem.rectangle( 0, 0, size.width, size.height );
 
 	mem.getPen().setColor( colors::BLUE );
-	paintGraph( mem, m_heights, m_heightRange.getDuo() );
+	paintLineGraph( mem, m_heights, m_heightRange );
 	mem.getPen().setColor( colors::RED );
-	paintGraph( mem, m_speeds, m_speedRange.getDuo() );
+	paintLineGraph( mem, m_speeds, m_speedRange );
 }
 
 // --------------------------------------------------------------------- //
