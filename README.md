@@ -32,3 +32,7 @@ Leer:    Schaltet zwischen Profil- und Landeransicht um.
 </pre>
 
 <img width="642" height="511" alt="screen" src="https://github.com/user-attachments/assets/d91cdcc1-159a-4b14-9ab5-d6c4e2bb1796" />
+
+<img width="642" height="511" alt="landed" src="https://github.com/user-attachments/assets/2989b9b7-f4da-41b7-a80b-907a2061d050" />
+
+<img width="642" height="511" alt="graph" src="https://github.com/user-attachments/assets/5508a7bb-d6df-4d55-be3f-be12d54e14a5" />
