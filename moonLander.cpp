@@ -83,6 +83,9 @@ const double MAX_SPEED = 5;				// max. allowed landing speed [m/s]
 const double BRAKE_FACTOR = 0.3;		// accelleration for one brake rocket level
 const double CONSUMPTION_FACTOR = 10;	// fuel-consumption per 1 m/s² and 1 s
 
+const int NUMBER_WIDTH = 6;
+const int NUMBER_PREC = 2;
+
 // --------------------------------------------------------------------- //
 // ----- macros -------------------------------------------------------- //
 // --------------------------------------------------------------------- //
@@ -155,6 +158,12 @@ class MoonMainWindow : public OverlappedWindow
 		m_speeds.empty();
 		m_heightRange.reset();
 		m_speedRange.reset();
+
+		m_heights.addElement( m_height );
+		m_heightRange.test( m_height );
+		m_speeds.addElement( m_speed );
+		m_speedRange.test( m_speed );
+
 		m_missionTime.start();
 		m_sw.start();
 		setTimer(100);
@@ -254,8 +263,6 @@ static WindowsApplication	app;
 void MoonMainWindow::paintMoon( MemoryDevice &mem )
 {
 	const int PADDING = 8;
-	const int NUMBER_WIDTH = 6;
-	const int NUMBER_PREC = 2;
 	const int LINE_HEIGHT = 15;
 	const int INSTRUMENT_WIDTH = 215;
 	const int INSTRUMENT_HEIGHT = 2*PADDING+8*LINE_HEIGHT;
@@ -441,7 +448,33 @@ void MoonMainWindow::paintGraph( MemoryDevice &mem )
 	const Size &size = mem.getSize();
 
 	mem.getBrush().create( colors::WHITE );
-	mem.rectangle( 0, 0, size.width, size.height );
+	mem.getPen().setStyle(Pen::psNull);
+	mem.rectangle( 0, 0, size.width+1, size.height+1 );
+	mem.getPen().setStyle(Pen::psSolid);
+
+	mem.setMonospacedFont();
+	mem.setTextAlignment( Device::haLeft, Device::vaTop );
+	mem.textOut( 0, 0, 
+			gak::formatFloat( m_heightRange.getMax(), 0, NUMBER_PREC )
+			.add(" m")
+	);
+	mem.setTextAlignment( Device::haLeft, Device::vaBottom );
+	mem.textOut( 0, size.height, 
+			gak::formatFloat( m_heightRange.getMin(), 0, NUMBER_PREC )
+			.add(" m")
+	);
+
+	mem.setTextAlignment( Device::haRight, Device::vaTop );
+	mem.textOut( size.width, 0, 
+			gak::formatFloat( m_speedRange.getMax(), 0, NUMBER_PREC )
+			.add(" m/s")
+	);
+
+	mem.setTextAlignment( Device::haRight, Device::vaBottom );
+	mem.textOut( size.width, size.height, 
+			gak::formatFloat( m_speedRange.getMin(), 0, NUMBER_PREC )
+			.add(" m/s")
+	);
 
 	mem.getPen().setColor( colors::BLUE );
 	paintLineGraph( mem, m_heights, m_heightRange, false );
@@ -562,7 +595,10 @@ ProcessStatus MoonMainWindow::handleCharacterInput( int c )
 	else if( c == 'r'  )
 		restart();
 	else if( c == 'e'  )
+	{
 		m_showEstimations = !m_showEstimations;
+		invalidateWindow();
+	}
 	else if( c == ' '  )
 	{
 		m_showGraph = !m_showGraph;
