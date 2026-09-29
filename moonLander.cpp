@@ -265,7 +265,8 @@ void MoonMainWindow::paintMoon( MemoryDevice &mem )
 	const int PADDING = 8;
 	const int LINE_HEIGHT = 15;
 	const int INSTRUMENT_WIDTH = 215;
-	const int INSTRUMENT_HEIGHT = 2*PADDING+8*LINE_HEIGHT;
+	const int INSTRUMENT_HEIGHT = 2*PADDING+6*LINE_HEIGHT;
+	const int INSTRUMENT_XHEIGHT = 2*PADDING+8*LINE_HEIGHT;
 
 	CurrentState	state = getState();
 
@@ -273,8 +274,7 @@ void MoonMainWindow::paintMoon( MemoryDevice &mem )
 
 	mem.setMonospacedFont();
 	mem.getBrush().create( colors::WHITE );
-	mem.rectangle( 0, 0, INSTRUMENT_WIDTH, m_showEstimations ? INSTRUMENT_HEIGHT : (INSTRUMENT_HEIGHT-2*LINE_HEIGHT) );
-	gak::StringBuffer<128>	b;
+	mem.rectangle( 0, 0, INSTRUMENT_WIDTH, m_showEstimations ? INSTRUMENT_XHEIGHT : INSTRUMENT_HEIGHT );
 
 	const int x = PADDING;
 	int y = PADDING;
