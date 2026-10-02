@@ -37,6 +37,7 @@
 // ----- includes ------------------------------------------------------ //
 // --------------------------------------------------------------------- //
 
+#include <gak/StringBuffer.h>
 #include <gak/fmtNumber.h>
 #include <gak/stopWatch.h>
 #include <gak/physic.h>
@@ -280,43 +281,43 @@ void MoonMainWindow::paintMoon( MemoryDevice &mem )
 	int y = PADDING;
 
 	mem.textOut( x, y, 
-		STRING("Height:       ")
-			.add(gak::formatFloat( m_height, NUMBER_WIDTH, NUMBER_PREC ))
+		gak::StringBuffer<128>().add("Height:       ")
+			.addFloat( m_height, NUMBER_WIDTH, NUMBER_PREC )
 			.add(" m")
 	);
 
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
-		STRING("Speed:        ")
-			.add(gak::formatFloat( m_speed, NUMBER_WIDTH, NUMBER_PREC ))
+		gak::StringBuffer<128>().add("Speed:        ")
+			.addFloat( m_speed, NUMBER_WIDTH, NUMBER_PREC )
 			.add(" m/s")
 	);
 
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
-		STRING("Moon Accel.:  ")
-			.add(gak::formatFloat( state.moonAccel, NUMBER_WIDTH, NUMBER_PREC ))
+		gak::StringBuffer<128>().add("Moon Accel.:  ")
+			.addFloat( state.moonAccel, NUMBER_WIDTH, NUMBER_PREC )
 			.add(" m/s²")
 	);
 
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
-		STRING("Cur. Accel.:  ")
-			.add(gak::formatFloat( state.accel, NUMBER_WIDTH, NUMBER_PREC ))
+		gak::StringBuffer<128>().add("Cur. Accel.:  ")
+			.addFloat( state.accel, NUMBER_WIDTH, NUMBER_PREC )
 			.add(" m/s²") 
 	);
 
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
-		STRING("Mission Time: ")
-			.add(gak::formatNumber( m_missionTime.get<gak::Seconds<>>().get(), NUMBER_WIDTH, ' ' ))
+		gak::StringBuffer<128>().add("Mission Time: ")
+			.addNumber( m_missionTime.get<gak::Seconds<>>().get(), NUMBER_WIDTH, ' ' )
 			.add(" s")
 	);
 
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
-		STRING("Fuel:         ")
-			.add(gak::formatFloat( m_fuel, NUMBER_WIDTH, NUMBER_PREC ))
+		gak::StringBuffer<128>().add("Fuel:         ")
+			.addFloat( m_fuel, NUMBER_WIDTH, NUMBER_PREC )
 			.add(" l")
 	);
 
@@ -327,14 +328,14 @@ void MoonMainWindow::paintMoon( MemoryDevice &mem )
 		if( landingTime>= 0 )
 		{
 			mem.textOut( x, y, 
-				STRING("Est. Time:    ")
-				.add(gak::formatFloat( landingTime, NUMBER_WIDTH, NUMBER_PREC ))
-					.add(" s")
+				gak::StringBuffer<128>().add("Est. Time:    ")
+				.addFloat( landingTime, NUMBER_WIDTH, NUMBER_PREC )
+				.add(" s")
 			);
 		}
 		else
 		{
-			mem.textOut( x, y, STRING("Est. Time:    ------") );
+			mem.textOutA( x, y, "Est. Time:    ------" );
 		}
 
 		y += LINE_HEIGHT;
@@ -342,14 +343,14 @@ void MoonMainWindow::paintMoon( MemoryDevice &mem )
 		{
 			double landingSpeed = gak::physic::speed(m_speed, state.accel, landingTime );
 			mem.textOut( x, y, 
-				STRING("Est. Speed:   ")
-				.add(gak::formatFloat( landingSpeed, NUMBER_WIDTH, NUMBER_PREC ))
-					.add(" m/s")
+				gak::StringBuffer<128>().add("Est. Speed:   ")
+				.addFloat( landingSpeed, NUMBER_WIDTH, NUMBER_PREC )
+				.add(" m/s")
 			);
 		}
 		else
 		{
-			mem.textOut( x, y, STRING("Est. Speed:   ------") );
+			mem.textOutA( x, y, "Est. Speed:   ------" );
 		}
 	}
 
@@ -362,7 +363,10 @@ void MoonMainWindow::paintMoon( MemoryDevice &mem )
 		mem.setTextAlignment( Device::haCenter, Device::vaBaseline );
 		mem.setBackgroundColor( winlib::colors::BLACK, TRANSPARENT );
 		const Size &size = mem.getSize();
-		mem.textOut(size.width/2, size.height/2, crashed ? "Eagle Crashed!" : "Eagle Landed!" );
+		if( crashed )
+			mem.textOutA(size.width/2, size.height/2, "Eagle Crashed!" );
+		else
+			mem.textOutA(size.width/2, size.height/2, "Eagle Landed!" );
 		mem.drawIcon( m_landerX, m_landerY, crashed ? m_crashed : m_eagle );
 		if( !crashed )
 		{
@@ -455,25 +459,25 @@ void MoonMainWindow::paintGraph( MemoryDevice &mem )
 	mem.setMonospacedFont();
 	mem.setTextAlignment( Device::haLeft, Device::vaTop );
 	mem.textOut( 0, 0, 
-			gak::formatFloat( m_heightRange.getMax(), 0, NUMBER_PREC )
-			.add(" m")
+		gak::StringBuffer<128>().addFloat( m_heightRange.getMax(), 0, NUMBER_PREC )
+		.add(" m")
 	);
 	mem.setTextAlignment( Device::haLeft, Device::vaBottom );
 	mem.textOut( 0, size.height, 
-			gak::formatFloat( m_heightRange.getMin(), 0, NUMBER_PREC )
-			.add(" m")
+		gak::StringBuffer<128>().addFloat( m_heightRange.getMin(), 0, NUMBER_PREC )
+		.add(" m")
 	);
 
 	mem.setTextAlignment( Device::haRight, Device::vaTop );
 	mem.textOut( size.width, 0, 
-			gak::formatFloat( m_speedRange.getMax(), 0, NUMBER_PREC )
-			.add(" m/s")
+		gak::StringBuffer<128>().addFloat( m_speedRange.getMax(), 0, NUMBER_PREC )
+		.add(" m/s")
 	);
 
 	mem.setTextAlignment( Device::haRight, Device::vaBottom );
 	mem.textOut( size.width, size.height, 
-			gak::formatFloat( m_speedRange.getMin(), 0, NUMBER_PREC )
-			.add(" m/s")
+		gak::StringBuffer<128>().addFloat( m_speedRange.getMin(), 0, NUMBER_PREC )
+		.add(" m/s")
 	);
 
 	mem.getPen().setColor( colors::BLUE );
