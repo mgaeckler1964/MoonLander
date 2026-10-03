@@ -37,7 +37,6 @@
 // ----- includes ------------------------------------------------------ //
 // --------------------------------------------------------------------- //
 
-#include <gak/StringBuffer.h>
 #include <gak/fmtNumber.h>
 #include <gak/stopWatch.h>
 #include <gak/physic.h>
@@ -281,42 +280,42 @@ void MoonMainWindow::paintMoon( MemoryDevice &mem )
 	int y = PADDING;
 
 	mem.textOut( x, y, 
-		gak::StringBuffer<128>().add("Height:       ")
+		gak::NumberBuffer().add("Height:       ")
 			.addFloat( m_height, NUMBER_WIDTH, NUMBER_PREC )
 			.add(" m")
 	);
 
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
-		gak::StringBuffer<128>().add("Speed:        ")
+		gak::NumberBuffer().add("Speed:        ")
 			.addFloat( m_speed, NUMBER_WIDTH, NUMBER_PREC )
 			.add(" m/s")
 	);
 
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
-		gak::StringBuffer<128>().add("Moon Accel.:  ")
+		gak::NumberBuffer().add("Moon Accel.:  ")
 			.addFloat( state.moonAccel, NUMBER_WIDTH, NUMBER_PREC )
 			.add(" m/s²")
 	);
 
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
-		gak::StringBuffer<128>().add("Cur. Accel.:  ")
+		gak::NumberBuffer().add("Cur. Accel.:  ")
 			.addFloat( state.accel, NUMBER_WIDTH, NUMBER_PREC )
 			.add(" m/s²") 
 	);
 
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
-		gak::StringBuffer<128>().add("Mission Time: ")
+		gak::NumberBuffer().add("Mission Time: ")
 			.addNumber( m_missionTime.get<gak::Seconds<>>().get(), NUMBER_WIDTH, ' ' )
 			.add(" s")
 	);
 
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
-		gak::StringBuffer<128>().add("Fuel:         ")
+		gak::NumberBuffer().add("Fuel:         ")
 			.addFloat( m_fuel, NUMBER_WIDTH, NUMBER_PREC )
 			.add(" l")
 	);
@@ -328,7 +327,7 @@ void MoonMainWindow::paintMoon( MemoryDevice &mem )
 		if( landingTime>= 0 )
 		{
 			mem.textOut( x, y, 
-				gak::StringBuffer<128>().add("Est. Time:    ")
+				gak::NumberBuffer().add("Est. Time:    ")
 				.addFloat( landingTime, NUMBER_WIDTH, NUMBER_PREC )
 				.add(" s")
 			);
@@ -343,7 +342,7 @@ void MoonMainWindow::paintMoon( MemoryDevice &mem )
 		{
 			double landingSpeed = gak::physic::speed(m_speed, state.accel, landingTime );
 			mem.textOut( x, y, 
-				gak::StringBuffer<128>().add("Est. Speed:   ")
+				gak::NumberBuffer().add("Est. Speed:   ")
 				.addFloat( landingSpeed, NUMBER_WIDTH, NUMBER_PREC )
 				.add(" m/s")
 			);
@@ -459,24 +458,24 @@ void MoonMainWindow::paintGraph( MemoryDevice &mem )
 	mem.setMonospacedFont();
 	mem.setTextAlignment( Device::haLeft, Device::vaTop );
 	mem.textOut( 0, 0, 
-		gak::StringBuffer<128>().addFloat( m_heightRange.getMax(), 0, NUMBER_PREC )
+		gak::NumberBuffer().addFloat( m_heightRange.getMax(), 0, NUMBER_PREC )
 		.add(" m")
 	);
 	mem.setTextAlignment( Device::haLeft, Device::vaBottom );
 	mem.textOut( 0, size.height, 
-		gak::StringBuffer<128>().addFloat( m_heightRange.getMin(), 0, NUMBER_PREC )
+		gak::NumberBuffer().addFloat( m_heightRange.getMin(), 0, NUMBER_PREC )
 		.add(" m")
 	);
 
 	mem.setTextAlignment( Device::haRight, Device::vaTop );
 	mem.textOut( size.width, 0, 
-		gak::StringBuffer<128>().addFloat( m_speedRange.getMax(), 0, NUMBER_PREC )
+		gak::NumberBuffer().addFloat( m_speedRange.getMax(), 0, NUMBER_PREC )
 		.add(" m/s")
 	);
 
 	mem.setTextAlignment( Device::haRight, Device::vaBottom );
 	mem.textOut( size.width, size.height, 
-		gak::StringBuffer<128>().addFloat( m_speedRange.getMin(), 0, NUMBER_PREC )
+		gak::NumberBuffer().addFloat( m_speedRange.getMin(), 0, NUMBER_PREC )
 		.add(" m/s")
 	);
 
