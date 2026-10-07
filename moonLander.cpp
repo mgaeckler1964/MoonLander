@@ -188,7 +188,6 @@ class MoonMainWindow : public OverlappedWindow
 		setText("Moon Lander");
 		m_heights.setCapacity(1024, false);
 		m_speeds.setCapacity(1024, false);
-		restart();
 	}
 };
 
@@ -353,7 +352,7 @@ void MoonMainWindow::paintMoon( MemoryDevice &mem )
 		}
 	}
 
-	if( m_landerY >= m_bg.getHeight()-m_landerHeight )
+	if( m_landerY >= m_bg.getHeight()-m_landerHeight )		// moon lander visual landed/crashed
 	{
 		bool crashed = m_speed >= MAX_SPEED;
 		m_landerY = m_bg.getHeight()-m_landerHeight;
@@ -380,6 +379,7 @@ void MoonMainWindow::paintMoon( MemoryDevice &mem )
 	}
 	else 
 	{
+		// moon lander still landing
 		assert( m_landerX && m_landerY );	// ensure that WM_REDRAW never comes before WM_CREATE
 		mem.drawIcon( m_landerX, m_landerY, m_eagle );
 		if( m_strength )
@@ -545,7 +545,7 @@ void MoonMainWindow::handleTimer()
 		return;		
 	}
 
-	if( m_height > 0 )
+	if( m_height > 0 )		// noon lander not yet landed
 	{
 		const CurrentState state = getState();
 
@@ -572,15 +572,15 @@ void MoonMainWindow::handleTimer()
 		}
 	}
 
-	if( m_height <= 0 )
+	if( m_height <= 0 )		// moon lander touched surface
 	{
 		m_height = 0;
 		m_strength = 0;
 		if( m_landerY < m_bg.getHeight()-m_landerHeight )
-		{
+		{	// update visual display
 			m_landerY += gak::math::max(gak::math::round<int>(m_speed),1);
 			if( m_landerY >= m_bg.getHeight()-m_landerHeight )
-			{
+			{	// moon lander visual landed/crashed
 				m_landerY = m_bg.getHeight()-m_landerHeight;
 				stopMission();
 			}
