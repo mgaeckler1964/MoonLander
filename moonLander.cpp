@@ -359,7 +359,7 @@ void MoonMainWindow::paintMoon( MemoryDevice &mem )
 		mem.selectFont( Font(this).setVariableFont().setFontSize(20).setBold() );
 		mem.setTextColor( winlib::colors::WHITE );
 		mem.setTextAlignment( Device::haCenter, Device::vaBaseline );
-		mem.setBackgroundColor( winlib::colors::BLACK, TRANSPARENT );
+		mem.setBackgroundColor( winlib::colors::BLACK, bmTRANSPARENT );
 		const Size &size = mem.getSize();
 		if( crashed )
 			mem.textOutA(size.width/2, size.height/2, "Eagle Crashed!" );
