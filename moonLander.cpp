@@ -201,7 +201,7 @@ class WindowsApplication : public Application
 		setCompany("gak");
 		return 0;
 	}
-	CallbackWindow *createMainWindow( const char * /*cmdLine*/, int /*nCmdShow*/ ) override
+	CallbackWindow *createMainWindow( const char * /*cmdLine*/, ShowWindowMode /*nCmdShow*/ ) override
 	{
 		std::unique_ptr<MoonMainWindow>	mainWindow( new MoonMainWindow );
 		if( mainWindow->create( nullptr ) == scERROR )
@@ -273,7 +273,7 @@ void MoonMainWindow::paintMoon( MemoryDevice &mem )
 
 	mem.setMonospacedFont();
 	mem.getBrush().create( colors::WHITE );
-	mem.rectangle( 0, 0, INSTRUMENT_WIDTH, m_showEstimations ? INSTRUMENT_XHEIGHT : INSTRUMENT_HEIGHT );
+	mem.drawRectangle( 0, 0, INSTRUMENT_WIDTH, m_showEstimations ? INSTRUMENT_XHEIGHT : INSTRUMENT_HEIGHT );
 
 	const int x = PADDING;
 	int y = PADDING;
@@ -452,7 +452,7 @@ void MoonMainWindow::paintGraph( MemoryDevice &mem )
 
 	mem.getBrush().create( colors::WHITE );
 	mem.getPen().setStyle(Pen::psNull);
-	mem.rectangle( 0, 0, size.width+1, size.height+1 );
+	mem.drawRectangle( 0, 0, size.width+1, size.height+1 );
 	mem.getPen().setStyle(Pen::psSolid);
 
 	mem.setMonospacedFont();
