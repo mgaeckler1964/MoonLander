@@ -27,6 +27,7 @@ werden:
 'E':     Zeigt zusätzliche Metriken:
          Zeit bis zur Landung
          Geschwindigkeit bei der Landung
+'M':     Wechselt die Einheiten m(eter) - l(iter) <-> f(ee)t - gal(lone)
 Leer:    Schaltet zwischen Profil- und Landeransicht um.
 'Q':     Beendet das Programm.
 </pre>
