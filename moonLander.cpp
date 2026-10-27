@@ -41,6 +41,7 @@
 #include <gak/stopWatch.h>
 #include <gak/physic.h>
 #include <gak/optional.h>
+#include <gak/quantities.h>
 
 #include <WINLIB/WINAPP.H>
 #include <winlib/POPUP.H>
@@ -106,6 +107,7 @@ class MoonMainWindow : public OverlappedWindow
 	double	m_height,
 			m_speed,
 			m_fuel;
+	bool	m_metric;
 	gak::StopWatch	m_sw, m_missionTime;
 	Bitmap	m_bg;
 	Icon	m_eagle,
@@ -182,7 +184,7 @@ class MoonMainWindow : public OverlappedWindow
 
 	public:
 	MoonMainWindow() : OverlappedWindow( nullptr ), 
-		m_landerX(0), m_landerY(0), m_fireX(0), m_strength(0), m_counter(0), m_showEstimations(false), m_showGraph(false)
+		m_landerX(0), m_landerY(0), m_fireX(0), m_strength(0), m_counter(0), m_showEstimations(false), m_showGraph(false), m_metric(true)
 	{
 		removeStyle(WS_THICKFRAME|WS_MAXIMIZEBOX);
 		setText("Moon Lander");
@@ -259,6 +261,34 @@ static WindowsApplication	app;
 // ----- class privates ------------------------------------------------ //
 // --------------------------------------------------------------------- //
 
+#define GetMeterValue( base )		\
+	if( m_metric )					\
+	{								\
+		value = base;				\
+		unit = meter.getUnit();		\
+	}								\
+	else							\
+	{								\
+		meter = base;				\
+		feet = meter;				\
+		value = feet;				\
+		unit = feet.getUnit();		\
+	}
+
+#define GetLiterValue( base )		\
+	if( m_metric )					\
+	{								\
+		value = base;				\
+		unit = liter.getUnit();		\
+	}								\
+	else							\
+	{								\
+		liter = base;				\
+		gallon = liter;				\
+		value = gallon;				\
+		unit = gallon.getUnit();	\
+	}
+		
 void MoonMainWindow::paintMoon( MemoryDevice &mem )
 {
 	const int PADDING = 8;
@@ -275,34 +305,44 @@ void MoonMainWindow::paintMoon( MemoryDevice &mem )
 	mem.getBrush().create( colors::WHITE );
 	mem.drawRectangle( 0, 0, INSTRUMENT_WIDTH, m_showEstimations ? INSTRUMENT_XHEIGHT : INSTRUMENT_HEIGHT );
 
-	const int x = PADDING;
-	int y = PADDING;
+	const int	x = PADDING;
+	int			y = PADDING;
+
+	double		value;
+	const char	*unit;
+
+	gak::Meter	meter;
+	gak::Feet	feet;
+	GetMeterValue( m_height );
 
 	mem.textOut( x, y, 
 		gak::NumberBuffer().add("Height:       ")
-			.addFloat( m_height, NUMBER_WIDTH, NUMBER_PREC )
-			.add(" m")
+			.addFloat( value, NUMBER_WIDTH, NUMBER_PREC )
+			.addCP(unit)
 	);
 
+	GetMeterValue( m_speed );
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
 		gak::NumberBuffer().add("Speed:        ")
-			.addFloat( m_speed, NUMBER_WIDTH, NUMBER_PREC )
-			.add(" m/s")
+			.addFloat( value, NUMBER_WIDTH, NUMBER_PREC )
+			.addCP(unit).add("/s")
 	);
 
+	GetMeterValue( state.moonAccel );
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
 		gak::NumberBuffer().add("Moon Accel.:  ")
-			.addFloat( state.moonAccel, NUMBER_WIDTH, NUMBER_PREC )
-			.add(" m/s²")
+			.addFloat( value, NUMBER_WIDTH, NUMBER_PREC )
+			.addCP(unit).add("/s²")
 	);
 
+	GetMeterValue( state.accel );
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
 		gak::NumberBuffer().add("Cur. Accel.:  ")
-			.addFloat( state.accel, NUMBER_WIDTH, NUMBER_PREC )
-			.add(" m/s²") 
+			.addFloat( value, NUMBER_WIDTH, NUMBER_PREC )
+			.addCP(unit).add("/s²") 
 	);
 
 	y += LINE_HEIGHT;
@@ -312,11 +352,16 @@ void MoonMainWindow::paintMoon( MemoryDevice &mem )
 			.add(" s")
 	);
 
+	gak::Liter		liter;
+	gak::UsGallon	gallon;
+
+	GetLiterValue( m_fuel );
+
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
 		gak::NumberBuffer().add("Fuel:         ")
-			.addFloat( m_fuel, NUMBER_WIDTH, NUMBER_PREC )
-			.add(" l")
+			.addFloat( value, NUMBER_WIDTH, NUMBER_PREC )
+			.addCP(unit)
 	);
 
 	if( m_showEstimations )
@@ -457,26 +502,35 @@ void MoonMainWindow::paintGraph( MemoryDevice &mem )
 
 	mem.setMonospacedFont();
 	mem.setTextAlignment( Device::haLeft, Device::vaTop );
+
+	double		value;
+	const char	*unit;
+	gak::Meter	meter;
+	gak::Feet	feet;
+	GetMeterValue(m_heightRange.getMax());
 	mem.textOut( 0, 0, 
-		gak::NumberBuffer().addFloat( m_heightRange.getMax(), 0, NUMBER_PREC )
-		.add(" m")
+		gak::NumberBuffer().addFloat( value, 0, NUMBER_PREC )
+		.addCP(unit)
 	);
 	mem.setTextAlignment( Device::haLeft, Device::vaBottom );
+	GetMeterValue(m_heightRange.getMin());
 	mem.textOut( 0, size.height, 
-		gak::NumberBuffer().addFloat( m_heightRange.getMin(), 0, NUMBER_PREC )
-		.add(" m")
+		gak::NumberBuffer().addFloat( value, 0, NUMBER_PREC )
+		.addCP(unit)
 	);
 
 	mem.setTextAlignment( Device::haRight, Device::vaTop );
+	GetMeterValue(m_speedRange.getMax());
 	mem.textOut( size.width, 0, 
-		gak::NumberBuffer().addFloat( m_speedRange.getMax(), 0, NUMBER_PREC )
-		.add(" m/s")
+		gak::NumberBuffer().addFloat( value, 0, NUMBER_PREC )
+		.addCP(unit).add("/s")
 	);
 
 	mem.setTextAlignment( Device::haRight, Device::vaBottom );
+	GetMeterValue(m_speedRange.getMin());
 	mem.textOut( size.width, size.height, 
-		gak::NumberBuffer().addFloat( m_speedRange.getMin(), 0, NUMBER_PREC )
-		.add(" m/s")
+		gak::NumberBuffer().addFloat( value, 0, NUMBER_PREC )
+		.addCP(unit).add("/s")
 	);
 
 	mem.getPen().setColor( colors::BLUE );
@@ -600,6 +654,11 @@ ProcessStatus MoonMainWindow::handleCharacterInput( int c )
 	else if( c == 'e'  )
 	{
 		m_showEstimations = !m_showEstimations;
+		invalidateWindow();
+	}
+	else if( c == 'm'  )
+	{
+		m_metric = !m_metric;
 		invalidateWindow();
 	}
 	else if( c == ' '  )
