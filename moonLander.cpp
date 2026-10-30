@@ -107,7 +107,7 @@ class MoonMainWindow : public OverlappedWindow
 	double	m_height,
 			m_speed,
 			m_fuel;
-	bool	m_metric;
+	bool	m_useSI;
 	gak::StopWatch	m_sw, m_missionTime;
 	Bitmap	m_bg;
 	Icon	m_eagle,
@@ -184,7 +184,7 @@ class MoonMainWindow : public OverlappedWindow
 
 	public:
 	MoonMainWindow() : OverlappedWindow( nullptr ), 
-		m_landerX(0), m_landerY(0), m_fireX(0), m_strength(0), m_counter(0), m_showEstimations(false), m_showGraph(false), m_metric(true)
+		m_landerX(0), m_landerY(0), m_fireX(0), m_strength(0), m_counter(0), m_showEstimations(false), m_showGraph(false), m_useSI(true)
 	{
 		removeStyle(WS_THICKFRAME|WS_MAXIMIZEBOX);
 		setText("Moon Lander");
@@ -261,34 +261,24 @@ static WindowsApplication	app;
 // ----- class privates ------------------------------------------------ //
 // --------------------------------------------------------------------- //
 
-#define GetMeterValue( base )		\
-	if( m_metric )					\
-	{								\
-		value = base;				\
-		unit = meter.getUnit();		\
-	}								\
-	else							\
-	{								\
-		meter = base;				\
-		feet = meter;				\
-		value = feet;				\
-		unit = feet.getUnit();		\
+template <typename QuantityT,  typename SiT>
+double getData(bool useSi, SiT siValue, const char **unit )
+{
+	double value;
+	if( useSi )
+	{
+		value = double(siValue);
+		*unit = siValue.getUnit();
 	}
+	else
+	{
+		QuantityT	quantity( siValue );
+		value = double(quantity);
+		*unit = quantity.getUnit();
+	}
+	return value;
+}
 
-#define GetLiterValue( base )		\
-	if( m_metric )					\
-	{								\
-		value = base;				\
-		unit = liter.getUnit();		\
-	}								\
-	else							\
-	{								\
-		liter = base;				\
-		gallon = liter;				\
-		value = gallon;				\
-		unit = gallon.getUnit();	\
-	}
-		
 void MoonMainWindow::paintMoon( MemoryDevice &mem )
 {
 	const int PADDING = 8;
@@ -311,17 +301,14 @@ void MoonMainWindow::paintMoon( MemoryDevice &mem )
 	double		value;
 	const char	*unit;
 
-	gak::Meter	meter;
-	gak::Feet	feet;
-	GetMeterValue( m_height );
-
+	value = getData<gak::Feet>( m_useSI, gak::Meter( m_height ), &unit );
 	mem.textOut( x, y, 
 		gak::NumberBuffer().add("Height:       ")
 			.addFloat( value, NUMBER_WIDTH, NUMBER_PREC )
 			.addCP(unit)
 	);
 
-	GetMeterValue( m_speed );
+	value = getData<gak::Feet>( m_useSI, gak::Meter( m_speed ), &unit );
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
 		gak::NumberBuffer().add("Speed:        ")
@@ -329,7 +316,7 @@ void MoonMainWindow::paintMoon( MemoryDevice &mem )
 			.addCP(unit).add("/s")
 	);
 
-	GetMeterValue( state.moonAccel );
+	value = getData<gak::Feet>( m_useSI, gak::Meter( state.moonAccel ), &unit );
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
 		gak::NumberBuffer().add("Moon Accel.:  ")
@@ -337,7 +324,7 @@ void MoonMainWindow::paintMoon( MemoryDevice &mem )
 			.addCP(unit).add("/s²")
 	);
 
-	GetMeterValue( state.accel );
+	value = getData<gak::Feet>( m_useSI, gak::Meter( state.accel ), &unit );
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
 		gak::NumberBuffer().add("Cur. Accel.:  ")
@@ -352,11 +339,7 @@ void MoonMainWindow::paintMoon( MemoryDevice &mem )
 			.add(" s")
 	);
 
-	gak::Liter		liter;
-	gak::UsGallon	gallon;
-
-	GetLiterValue( m_fuel );
-
+	value = getData<gak::UsGallon>( m_useSI, gak::Liter( m_fuel ), &unit );
 	y += LINE_HEIGHT;
 	mem.textOut( x, y, 
 		gak::NumberBuffer().add("Fuel:         ")
@@ -385,10 +368,11 @@ void MoonMainWindow::paintMoon( MemoryDevice &mem )
 		if( landingTime>= 0 )
 		{
 			double landingSpeed = gak::physic::speed(m_speed, state.accel, landingTime );
+			value = getData<gak::Feet>( m_useSI, gak::Meter( landingSpeed ), &unit );
 			mem.textOut( x, y, 
 				gak::NumberBuffer().add("Est. Speed:   ")
-				.addFloat( landingSpeed, NUMBER_WIDTH, NUMBER_PREC )
-				.add(" m/s")
+				.addFloat( value, NUMBER_WIDTH, NUMBER_PREC )
+				.addCP(unit).add("/s")
 			);
 		}
 		else
@@ -505,29 +489,28 @@ void MoonMainWindow::paintGraph( MemoryDevice &mem )
 
 	double		value;
 	const char	*unit;
-	gak::Meter	meter;
-	gak::Feet	feet;
-	GetMeterValue(m_heightRange.getMax());
+
+	value = getData<gak::Feet>( m_useSI, gak::Meter( m_heightRange.getMax() ), &unit );
 	mem.textOut( 0, 0, 
 		gak::NumberBuffer().addFloat( value, 0, NUMBER_PREC )
 		.addCP(unit)
 	);
 	mem.setTextAlignment( Device::haLeft, Device::vaBottom );
-	GetMeterValue(m_heightRange.getMin());
+	value = getData<gak::Feet>( m_useSI, gak::Meter( m_heightRange.getMin() ), &unit );
 	mem.textOut( 0, size.height, 
 		gak::NumberBuffer().addFloat( value, 0, NUMBER_PREC )
 		.addCP(unit)
 	);
 
 	mem.setTextAlignment( Device::haRight, Device::vaTop );
-	GetMeterValue(m_speedRange.getMax());
+	value = getData<gak::Feet>( m_useSI, gak::Meter( m_speedRange.getMax() ), &unit );
 	mem.textOut( size.width, 0, 
 		gak::NumberBuffer().addFloat( value, 0, NUMBER_PREC )
 		.addCP(unit).add("/s")
 	);
 
 	mem.setTextAlignment( Device::haRight, Device::vaBottom );
-	GetMeterValue(m_speedRange.getMin());
+	value = getData<gak::Feet>( m_useSI, gak::Meter( m_speedRange.getMin() ), &unit );
 	mem.textOut( size.width, size.height, 
 		gak::NumberBuffer().addFloat( value, 0, NUMBER_PREC )
 		.addCP(unit).add("/s")
@@ -656,9 +639,9 @@ ProcessStatus MoonMainWindow::handleCharacterInput( int c )
 		m_showEstimations = !m_showEstimations;
 		invalidateWindow();
 	}
-	else if( c == 'm'  )
+	else if( c == 's'  )
 	{
-		m_metric = !m_metric;
+		m_useSI = !m_useSI;
 		invalidateWindow();
 	}
 	else if( c == ' '  )
